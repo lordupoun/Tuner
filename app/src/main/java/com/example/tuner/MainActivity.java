@@ -6,6 +6,9 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.Manifest;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -28,10 +31,14 @@ import be.tarsos.dsp.pitch.PitchProcessor;
 public class MainActivity extends AppCompatActivity {
 
     //Vars
+    private SeekBar centSeekBar;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private TextView frequencyText;
     private AudioDispatcher dispatcher;
     private Thread dispatcherThread; // Přidáno: vlákno dispatcheru
+    private double refFrequency = 440.0; // Defaultní
+    private EditText referenceFrequencyInput;
+    private Button setReferenceButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +53,26 @@ public class MainActivity extends AppCompatActivity {
 
         // GUI:
         frequencyText = findViewById(R.id.frequencyText);
+        centSeekBar = findViewById(R.id.centSeekBar);
+        referenceFrequencyInput = findViewById(R.id.referenceFrequencyInput);
+        setReferenceButton = findViewById(R.id.setReferenceButton);
+
+        referenceFrequencyInput = findViewById(R.id.referenceFrequencyInput);
+        setReferenceButton = findViewById(R.id.setReferenceButton);
+
+        setReferenceButton.setOnClickListener(v -> {
+            String input = referenceFrequencyInput.getText().toString();
+            if (!input.isEmpty()) {
+                try {
+                    double newReference = Double.parseDouble(input);
+                    if (newReference > 0) {
+                        refFrequency = newReference;
+                    }
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         // Check for permissions:
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -64,7 +91,25 @@ public class MainActivity extends AppCompatActivity {
                 if (pitchInHz > 0) {
                     runOnUiThread(() -> {
                         String noteAndCents = getNoteAndCentsFromFrequency(pitchInHz);
-                        frequencyText.setText(String.format(Locale.US, "Frekvence: %.2f Hz\nTón: %s", pitchInHz, noteAndCents));
+                        frequencyText.setText(String.format(Locale.US, "   %.2f Hz\n%s", pitchInHz, noteAndCents));
+
+                        double cents = getCentsFromFrequency(pitchInHz);
+                        int progress = (int) (50 + (cents / 50.0) * 50);
+                        progress = Math.max(0, Math.min(100, progress)); //Cents 0-100 = equals one semitone
+                        centSeekBar.setProgress(progress);
+
+                        //Color settings
+                        int color;
+                        if (Math.abs(cents) <= 3) { //3 for green
+                            color = ContextCompat.getColor(MainActivity.this, R.color.green);
+                        } else if (Math.abs(cents) <= 10) {
+                            color = ContextCompat.getColor(MainActivity.this, R.color.yellow);
+                        } else {
+                            color = ContextCompat.getColor(MainActivity.this, R.color.red);
+                        }
+
+                        centSeekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                        centSeekBar.getThumb().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
                     });
                 }
             }
@@ -122,23 +167,33 @@ public class MainActivity extends AppCompatActivity {
     private String getNoteAndCentsFromFrequency(float frequency) {
         if (frequency <= 0) return "Neznámý tón";
 
-        // Převod frekvence na MIDI číslo
-        double noteNumber = 69 + 12 * Math.log(frequency / 440.0) / Math.log(2);
+        //to MIDI - 69 = A4
+        double noteNumber = 69 + 12 * Math.log(frequency / refFrequency) / Math.log(2);
         int midiNote = (int) Math.round(noteNumber);
 
-        // Názvy not
+        //Notes
         String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
         String noteName = noteNames[midiNote % 12];
         int octave = (midiNote / 12) - 1;
 
-        // Ideální frekvence té noty
-        double nearestNoteFrequency = 440.0 * Math.pow(2, (midiNote - 69) / 12.0);
+        //Nearest note freq
+        double nearestNoteFrequency = refFrequency * Math.pow(2, (midiNote - 69) / 12.0);
 
-        // Odchylka v centech
+        //Interval in cents
         double cents = 1200 * Math.log(frequency / nearestNoteFrequency) / Math.log(2);
+
+        cents = Math.round(cents);
 
         return String.format(Locale.US, "%s%d (%.2f cents)", noteName, octave, cents);
     }
+    private double getCentsFromFrequency(float frequency) {
+        if (frequency <= 0) return 0;
 
+        double noteNumber = 69 + 12 * Math.log(frequency / refFrequency) / Math.log(2);
+        int midiNote = (int) Math.round(noteNumber);
+        double nearestNoteFrequency = refFrequency * Math.pow(2, (midiNote - 69) / 12.0);
+
+        return 1200 * Math.log(frequency / nearestNoteFrequency) / Math.log(2);
+    }
 }
