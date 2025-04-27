@@ -1,9 +1,9 @@
 package com.example.tuner;
 
 import android.content.pm.PackageManager;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
+//import android.media.AudioFormat;
+//import android.media.AudioRecord;
+//import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.Manifest;
 import android.widget.Button;
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
         cents = Math.round(cents);
 
-        return String.format(Locale.US, "%s%d\n   (%.2f cents)", noteName, octave, cents);
+        return String.format(Locale.US, "          %s%d\n   (%.2f cents)", noteName, octave, cents);
     }
     private double getCentsFromFrequency(float frequency) {
         if (frequency <= 0) return 0;
