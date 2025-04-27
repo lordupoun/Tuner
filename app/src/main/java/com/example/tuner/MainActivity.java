@@ -33,12 +33,15 @@ public class MainActivity extends AppCompatActivity {
     //Vars
     private SeekBar centSeekBar;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
-    private TextView frequencyText;
+    private TextView frequencyText, tuningText;
     private AudioDispatcher dispatcher;
-    private Thread dispatcherThread; // Přidáno: vlákno dispatcheru
-    private double refFrequency = 440.0; // Defaultní
+    private Thread dispatcherThread; //Thread for DSP dispatcher
     private EditText referenceFrequencyInput;
-    private Button setReferenceButton;
+    private Button guitarButton, ukuleleButton, bassButton, setReferenceButton;
+    private double refFrequency = 440.0; //default refFreq
+    private float smoothedPitch = -1;
+    private static final float SMOOTHING_FACTOR = 0.1f; //0.1 float for default smoothing
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,9 +59,18 @@ public class MainActivity extends AppCompatActivity {
         centSeekBar = findViewById(R.id.centSeekBar);
         referenceFrequencyInput = findViewById(R.id.referenceFrequencyInput);
         setReferenceButton = findViewById(R.id.setReferenceButton);
-
         referenceFrequencyInput = findViewById(R.id.referenceFrequencyInput);
         setReferenceButton = findViewById(R.id.setReferenceButton);
+        tuningText = findViewById(R.id.tuningText);
+        guitarButton = findViewById(R.id.guitarButton);
+        ukuleleButton = findViewById(R.id.ukuleleButton);
+        bassButton = findViewById(R.id.bassButton);
+
+        //GUI listeners:
+        guitarButton.setOnClickListener(v -> showTuning("guitar"));
+        ukuleleButton.setOnClickListener(v -> showTuning("ukulele"));
+        bassButton.setOnClickListener(v -> showTuning("bass"));
+
 
         setReferenceButton.setOnClickListener(v -> {
             String input = referenceFrequencyInput.getText().toString();
@@ -74,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Check for permissions:
+        // Check for mic permissions:
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         } else {
@@ -88,7 +100,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handlePitch(PitchDetectionResult result, be.tarsos.dsp.AudioEvent e) {
                 final float pitchInHz = result.getPitch();
-                if (pitchInHz > 0) {
+
+                if (pitchInHz > 0) { //smoothing - exponential accumulation - averaging
+                    if (smoothedPitch < 0) {
+                        smoothedPitch = pitchInHz;
+                    } else {
+                        smoothedPitch = smoothedPitch * (1 - SMOOTHING_FACTOR) + pitchInHz * SMOOTHING_FACTOR;
+                    }
                     runOnUiThread(() -> {
                         String noteAndCents = getNoteAndCentsFromFrequency(pitchInHz);
                         frequencyText.setText(String.format(Locale.US, "   %.2f Hz\n%s", pitchInHz, noteAndCents));
@@ -136,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    //Ends microphone on app close
+    //Ends microphone on app close - prevents bugs
     protected void onDestroy() {
         super.onDestroy();
         stopAudioProcessing();
@@ -196,4 +214,21 @@ public class MainActivity extends AppCompatActivity {
 
         return 1200 * Math.log(frequency / nearestNoteFrequency) / Math.log(2);
     }
+    private void showTuning(String instrument) {
+        String tuningInfo = "";
+        switch (instrument) {
+            case "guitar":
+                tuningInfo = "Kytara:\nE2 - nejvyšší\nA2\nD3\nG3\nB3\nE4";
+                break;
+            case "ukulele":
+                tuningInfo = "Ukulele:\nG4 - nejvyšší\nC4\nE4\nA4";
+                break;
+            case "bass":
+                tuningInfo = "Baskytara:\nE1 - nejvyšší\nA1\nD2\nG2";
+                break;
+        }
+        tuningText.setText(tuningInfo);
+    }
+
 }
+
