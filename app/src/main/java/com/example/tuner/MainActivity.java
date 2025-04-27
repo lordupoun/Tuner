@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     if (pitchInHz > 0) { //if pitch detected
+                        smoothedPitch=pitchInHz;
                         /*if (smoothedPitch < 0) { //smoothing
                             smoothedPitch = pitchInHz;
                         } else {
@@ -217,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
         cents = Math.round(cents);
 
-        return String.format(Locale.US, "%s%d (%.2f cents)", noteName, octave, cents);
+        return String.format(Locale.US, "%s%d\n   (%.2f cents)", noteName, octave, cents);
     }
     private double getCentsFromFrequency(float frequency) {
         if (frequency <= 0) return 0;
