@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private Button guitarButton, ukuleleButton, bassButton, setReferenceButton;
     private double refFrequency = 440.0; //default refFreq
     private float smoothedPitch = -1;
-    private static final float SMOOTHING_FACTOR = 0.1f; //0.1 float for default smoothing
+    //private static final float SMOOTHING_FACTOR = 0.5f; //0.1 float for default smoothing
 
 
     @Override
@@ -101,24 +101,27 @@ public class MainActivity extends AppCompatActivity {
             public void handlePitch(PitchDetectionResult result, be.tarsos.dsp.AudioEvent e) {
                 final float pitchInHz = result.getPitch();
 
-                if (pitchInHz > 0) { //smoothing - exponential accumulation - averaging
-                    if (smoothedPitch < 0) {
-                        smoothedPitch = pitchInHz;
-                    } else {
-                        smoothedPitch = smoothedPitch * (1 - SMOOTHING_FACTOR) + pitchInHz * SMOOTHING_FACTOR;
-                    }
-                    runOnUiThread(() -> {
-                        String noteAndCents = getNoteAndCentsFromFrequency(pitchInHz);
-                        frequencyText.setText(String.format(Locale.US, "   %.2f Hz\n%s", pitchInHz, noteAndCents));
+                runOnUiThread(() -> {
+                    if (pitchInHz > 0) { //if pitch detected
+                        /*if (smoothedPitch < 0) { //smoothing
+                            smoothedPitch = pitchInHz;
+                        } else {
+                            smoothedPitch = smoothedPitch * (1 - SMOOTHING_FACTOR) + pitchInHz * SMOOTHING_FACTOR;
+                        }*/
 
-                        double cents = getCentsFromFrequency(pitchInHz);
+                        String noteAndCents = getNoteAndCentsFromFrequency(smoothedPitch);
+                        frequencyText.setText(String.format(Locale.US, "     %.2f Hz\n%s", smoothedPitch, noteAndCents));
+                        frequencyText.setAlpha(1.0f);
+
+                        double cents = getCentsFromFrequency(smoothedPitch);
                         int progress = (int) (50 + (cents / 50.0) * 50);
-                        progress = Math.max(0, Math.min(100, progress)); //Cents 0-100 = equals one semitone
+                        progress = Math.max(0, Math.min(100, progress));
                         centSeekBar.setProgress(progress);
+                        centSeekBar.setAlpha(1.0f);
 
-                        //Color settings
+                        // Barvy podle přesnosti
                         int color;
-                        if (Math.abs(cents) <= 3) { //3 for green
+                        if (Math.abs(cents) <= 3) { //For 3 cent deviation = green
                             color = ContextCompat.getColor(MainActivity.this, R.color.green);
                         } else if (Math.abs(cents) <= 10) {
                             color = ContextCompat.getColor(MainActivity.this, R.color.yellow);
@@ -128,8 +131,19 @@ public class MainActivity extends AppCompatActivity {
 
                         centSeekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
                         centSeekBar.getThumb().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
-                    });
-                }
+
+                    } else { // Pokud neslyšíme nic
+                        frequencyText.setText("Čekám na tón :)");
+                        frequencyText.setAlpha(0.5f); // Lehce vybledlý text
+
+                        centSeekBar.setProgress(50); // Reset doprostřed
+                        centSeekBar.setAlpha(0.5f); // Vyšednutí posuvníku
+
+                        int color = ContextCompat.getColor(MainActivity.this, R.color.gray);
+                        centSeekBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                        centSeekBar.getThumb().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                    }
+                });
             }
         };
         dispatcher.addAudioProcessor(new PitchProcessor(
@@ -218,13 +232,13 @@ public class MainActivity extends AppCompatActivity {
         String tuningInfo = "";
         switch (instrument) {
             case "guitar":
-                tuningInfo = "Kytara:\nE2 - nejvyšší\nA2\nD3\nG3\nB3\nE4";
+                tuningInfo = "Kytara:\nE4\nB3\nG3\nD3\nA2\nE2";
                 break;
             case "ukulele":
-                tuningInfo = "Ukulele:\nG4 - nejvyšší\nC4\nE4\nA4";
+                tuningInfo = "Ukulele:\nA4\nE4\nC4\nG4";
                 break;
             case "bass":
-                tuningInfo = "Baskytara:\nE1 - nejvyšší\nA1\nD2\nG2";
+                tuningInfo = "Baskytara:\nG2\nD2\nA1\nE1";
                 break;
         }
         tuningText.setText(tuningInfo);

@@ -11,7 +11,7 @@
         android:id="@+id/frequencyText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Frekvence: "
+        android:text="Čekám na tón :)\n "
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
@@ -49,14 +49,15 @@
         android:layout_marginBottom="4dp"
         android:text="Nastav ref"
         app:layout_constraintBottom_toTopOf="@+id/guideline3"
-        app:layout_constraintEnd_toStartOf="@+id/guideline5" />
+        app:layout_constraintEnd_toStartOf="@+id/guideline5"
+        android:backgroundTint="#2196F3"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="186dp" />
+        app:layout_constraintGuide_begin="184dp" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline3"
@@ -83,7 +84,7 @@
         android:id="@+id/tuning_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="52dp"
+        android:layout_marginBottom="24dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/frequencyText"
@@ -93,21 +94,24 @@
             android:id="@+id/guitarButton"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="Kytara" />
+            android:text="Kytara"
+            android:backgroundTint="#03A9F4"/>
 
         <Button
             android:id="@+id/ukuleleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="Ukulele" />
+            android:text="Ukulele"
+            android:backgroundTint="#03A9F4"/>
 
         <Button
             android:id="@+id/bassButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="Baskytara" />
+            android:text="Baskytara"
+            android:backgroundTint="#03A9F4"/>
     </LinearLayout>
 
     <TextView
@@ -121,14 +125,29 @@
         app:layout_constraintTop_toTopOf="@+id/guideline6" />
 
     <TextView
+        android:id="@+id/hzText"
+        android:layout_width="35dp"
+        android:layout_height="24dp"
+        android:gravity="center"
+        android:text="Hz"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline3"
+        app:layout_constraintEnd_toStartOf="@+id/setReferenceButton"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/referenceFrequencyInput"
+        app:layout_constraintTop_toBottomOf="@+id/centSeekBar"
+        app:layout_constraintVertical_bias="0.954" />
+
+    <TextView
         android:id="@+id/tuningText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Ladění"
-        android:textSize="16sp"
+        android:textSize="20sp"
         app:layout_constraintBottom_toTopOf="@+id/guideline2"
-        app:layout_constraintTop_toTopOf="@+id/guideline3" />
+        app:layout_constraintTop_toTopOf="@+id/guideline3"
+        app:layout_constraintVertical_bias="0.157"
+        tools:layout_editor_absoluteX="0dp" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline2"
@@ -142,7 +161,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="20dp" />
+        app:layout_constraintGuide_begin="45dp" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
